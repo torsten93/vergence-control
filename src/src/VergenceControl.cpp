@@ -14,113 +14,45 @@
 //%%%%  The code is released for free use for SCIENTIFIC RESEARCH ONLY.   %%%%
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#include "VergenceControl.h"
+#include "VergenceControl/VergenceControl.h"
 
-//#include <cstdio>
-//#include <cstdlib>
+#include <cstdio>
 #include <cmath>
 #include <vector>
 #include <algorithm>
-//#include <cassert>
+#include <iterator>
 #include <sstream>
 #include <iostream>
 
-//#include "opencv2/core/utility.hpp"
-//#include "opencv2/imgproc.hpp"
-//#include "opencv2/imgcodecs.hpp"
-//#include "opencv2/highgui.hpp"
-
 using namespace std;
 using namespace cv;
-using namespace VergeceControl;
-
-namespace VergenceControl {
 
 //-----------------------------------------------------------//
 //----------------------INI READER---------------------------//
 //-----------------------------------------------------------//
 class CIniReader
 {
-private:
-    char m_szFileName[255];
-
 public:
-    CIniReader(char* szFileName)
+    CIniReader(const string &szFileName)
     {
-        memset(m_szFileName, 0x00, 255);
-        memcpy(m_szFileName, szFileName, strlen(szFileName));
     }
 
-    int ReadInteger(char* szSection, char* szKey, int iDefaultValue)
+    int ReadInteger(const string &szSection, const string &szKey)
     {
-        int iResult = GetPrivateProfileInt(szSection,  szKey, iDefaultValue, m_szFileName); 
-        return iResult;
     }
 
-    float ReadFloat(char* szSection, char* szKey, float fltDefaultValue)
+    float ReadFloat(const string &szSection, const string &szKey)
     {
-        char szResult[255];
-        char szDefault[255];
-        float fltResult;
-        sprintf(szDefault, "%f",fltDefaultValue);
-        GetPrivateProfileString(szSection,  szKey, szDefault, szResult, 255, m_szFileName); 
-        fltResult =  atof(szResult);
-        return fltResult;
     }
 
-    bool ReadBoolean(char* szSection, char* szKey, bool bolDefaultValue)
+    bool ReadBoolean(const string &szSection, const string &szKey)
     {
-        char szResult[255];
-        char szDefault[255];
-        bool bolResult;
-        sprintf(szDefault, "%s", bolDefaultValue? "True" : "False");
-        GetPrivateProfileString(szSection, szKey, szDefault, szResult, 255, m_szFileName); 
-        bolResult =  (strcmp(szResult, "True") == 0 || 
-               strcmp(szResult, "true") == 0) ? true : false;
-        return bolResult;
     }
 
-    char* ReadString(char* szSection, char* szKey, const char* szDefaultValue)
+    float* ReadFloatArray(const string &szSection, const string &szKey)
     {
-        char* szResult = new char[255];
-        memset(szResult, 0x00, 255);
-        GetPrivateProfileString(szSection,  szKey, 
-               szDefaultValue, szResult, 255, m_szFileName); 
-        return szResult;
-    }
-
-    float* ReadFloatArray(char* szSection, char* szKey, const char* szDefaultValue)
-    {
-        char* szResult = new char[255];
-        memset(szResult, 0x00, 255);
-        GetPrivateProfileString(szSection, szKey,
-                                szDefaultValue, szResult, 255, m_szFileName); 
-       //return szResult;
-       //atof(word.c_str())
-
-       string Numbers(szResult);
-       vector<float> v;
-
-       // Build an istream that holds the input string
-       istringstream iss(szResult);
-
-       // Iterate over the istream, using >> to grab floats
-       // and push_back to store them in the vector
-       copy(istream_iterator<float>(iss),istream_iterator<float>(),back_inserter(v));
-
-       // Put the result on standard out
-       // copy(v.begin(), v.end(),ostream_iterator<float>(cout, ", "));
-       // cout << "\n";
-
-       float* szResultFloat = new float[v.size()];
-       for(int i=0; i<v.size(); i++)
-           szResultFloat[i] = v[i];
-
-       return szResultFloat;
     }
 };
-
-}
 
 
 VergenceControl::VergenceControl(int width, int height, const string &filter_filename,
@@ -137,9 +69,9 @@ VergenceControl::VergenceControl(int width, int height, const string &filter_fil
     Vergence.GAIN[0] = 1.0;
     Vergence.GAIN[1] = 0.2;
 
-    //------------------- CREATE GABOR FILTERS AND GAUSSIAN ENVELOPE -------------------// 
+    //------------------- CREATE GABOR FILTERS AND GAUSSIAN ENVELOPE -------------------//
     loadGaborParams(filter_filename);
-    
+
     Mcut = Gfilt.taps;
     Ncut = Gfilt.taps;
 
@@ -150,33 +82,32 @@ VergenceControl::VergenceControl(int width, int height, const string &filter_fil
 
     Mpad = Mcut + 2*Gfilt.taps;
     Npad = Mcut + 2*Gfilt.taps;
-    
+
     createGaborFilters();
 
     create_Gaussian(filter_filename);
     loadVergenceW(verg_weight);
 
-
-    //------------------- INIT PATCH IMAGE -------------------// 
+    //------------------- INIT PATCH IMAGE -------------------//
     Lpatch = Mat(Mpatch, Npatch, CV_8UC1, Scalar(0));
     Rpatch = Mat(Mpatch, Npatch, CV_8UC1, Scalar(0));
 
     Lpatch32F = Mat(Mpatch, Npatch, CV_32FC1, Scalar(0));
     Rpatch32F = Mat(Mpatch, Npatch, CV_32FC1, Scalar(0));
 
-    //------------------- INIT PADDED IMAGE -------------------// 
+    //------------------- INIT PADDED IMAGE -------------------//
     Lpad =  Mat(height + 2*Gfilt.taps, width + 2*Gfilt.taps, CV_8UC3, Scalar(0,0,0));
     Rpad =  Mat(height + 2*Gfilt.taps, width + 2*Gfilt.taps, CV_8UC3, Scalar(0,0,0));
 
-    //------------------- INIT FFT IMAGE (further versions) -------------------// 
+    //------------------- INIT FFT IMAGE (further versions) -------------------//
     Lfft = Mat(Mpatch, Npatch, CV_32FC2, Scalar(0,0,0));
     Rfft = Mat(Mpatch, Npatch, CV_32FC2, Scalar(0,0,0));
-    
-    //------------------- SET ROI TO IMAGE CENTER -------------------// 
+
+    //------------------- SET ROI TO IMAGE CENTER -------------------//
     Point2d C(N/2,M/2);
     setCenter(C);
 
-    //------------------- INIT FILTERED IMAGE -------------------// 
+    //------------------- INIT FILTERED IMAGE -------------------//
     Lfilt[0] = new Mat1f [Gfilt.Nori]; // Even Filters
     Lfilt[1] = new Mat1f [Gfilt.Nori]; // Odd Filters
     Rfilt[0] = new Mat1f [Gfilt.Nori]; // Even  Filters
@@ -187,7 +118,7 @@ VergenceControl::VergenceControl(int width, int height, const string &filter_fil
             Rfilt[P][T] =  Mat(Gfilt.taps, Gfilt.taps, CV_32FC1);
         }
 
-    //------------------- INIT FILTERED AND PHASE SHIFTED IMAGE + ENERGY MATRIX -------------------// 
+    //------------------- INIT FILTERED AND PHASE SHIFTED IMAGE + ENERGY MATRIX -------------------//
     for (int P=0;P<Gfilt.Nph;P++){ //phases
         RShiftE[P] = new Mat1f [Gfilt.Nori]; // Even  Filters
         RShiftO[P] = new Mat1f [Gfilt.Nori]; // Odd  Filters
@@ -214,20 +145,20 @@ VergenceControl::VergenceControl(int width, int height, const string &filter_fil
     tmpIFT = Mat(Mpatch, Npatch, CV_32FC1, Scalar(0.0));
     tmpF = Mat(Mpatch, Npatch, CV_32FC1, Scalar(0.0));
 
-    //------------------- PRINT INFO -------------------// 
+    //------------------- PRINT INFO -------------------//
     printf("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n");
     printf("%%%%    A Portable Bio-Inspired Architecture for \n");
     printf("%%%%       Efficient Robotic Vergence Control    \n");
     printf("%%%%                                             \n");
-    printf("%%%%                                             \n");                                  
-    printf("%%%%    Copyright (c) Sep. 2017                  \n");                      
-    printf("%%%%    All rights reserved.                     \n");                      
-    printf("%%%%                                             \n");                                  
+    printf("%%%%                                             \n");
+    printf("%%%%    Copyright (c) Sep. 2017                  \n");
+    printf("%%%%    All rights reserved.                     \n");
+    printf("%%%%                                             \n");
     printf("%%%%    Authors: Agostino Gibaldi, Andrea Canessa, Silvio P. Sabatini\n");
-    printf("%%%%                                             \n");                              
+    printf("%%%%                                             \n");
     printf("%%%%    PSPC-lab - Department of Informatics, Bioengineering, \n");
     printf("%%%%    Robotics and Systems Engineering - University of Genoa \n");
-    printf("%%%%                                             \n");                                  
+    printf("%%%%                                             \n");
     printf("%%%%    The code is released for free use for SCIENTIFIC RESEARCH ONLY. \n");
     printf("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n");
     printf("\n\nImages: width=%d, height=%d;\n\n", M, N);
@@ -239,7 +170,7 @@ VergenceControl::VergenceControl(int width, int height, const string &filter_fil
 
 VergenceControl::~VergenceControl()
 {
-    //-------------------DISTRUCTOR-------------------// 
+    //-------------------DISTRUCTOR-------------------//
     L.release();
     R.release();
     Lgray.release();
@@ -251,37 +182,37 @@ VergenceControl::~VergenceControl()
 
 void VergenceControl::loadGaborParams(const string &ini_filter_file)
 {
-    //------------------- LOAD PARAMETERS FOR GABOR FILTERS -------------------// 
+    //------------------- LOAD PARAMETERS FOR GABOR FILTERS -------------------//
     char * cstr = new char [ini_filter_file.length()+1];
-    std::strcpy (cstr, ini_filter_file.c_str());
+    strcpy (cstr, ini_filter_file.c_str());
 
     // LOAD FILTER PARAMS
-    CIniReader iniReader(cstr); 
-    Gfilt.Nori = iniReader.ReadInteger("Gabor", "Nori", 0); 
-    Gfilt.Nph = iniReader.ReadInteger("Gabor", "Nph", 0); 
-    Gfilt.sigma = iniReader.ReadFloat("Gabor", "sigma", 0); 
-    Gfilt.taps = iniReader.ReadInteger("Gabor", "taps", 0); 
-    Gfilt.B = iniReader.ReadFloat("Gabor", "B", 0); 
-    Gfilt.f = iniReader.ReadFloat("Gabor", "f", 0);
-    Gfilt.phase = iniReader.ReadFloatArray("Gabor", "phases", 0);
-    fovea_size = iniReader.ReadFloat("Gaussian", "fovea_size", 0);
+    CIniReader iniReader(cstr);
+    Gfilt.Nori = iniReader.ReadInteger("Gabor", "Nori");
+    Gfilt.Nph = iniReader.ReadInteger("Gabor", "Nph");
+    Gfilt.sigma = iniReader.ReadFloat("Gabor", "sigma");
+    Gfilt.taps = iniReader.ReadInteger("Gabor", "taps");
+    Gfilt.B = iniReader.ReadFloat("Gabor", "B");
+    Gfilt.f = iniReader.ReadFloat("Gabor", "f");
+    Gfilt.phase = iniReader.ReadFloatArray("Gabor", "phases");
+    fovea_size = iniReader.ReadFloat("Gaussian", "fovea_size");
 }
 
 
 void VergenceControl::createGaborFilters()
 {
-    //------------------- CREATE GABOR FILTERS -------------------// 
+    //------------------- CREATE GABOR FILTERS -------------------//
     //Gfilt.taps = getOptimalDFTSize(2*Gfilt.taps);
     Gfilt.taps = Mpatch;
 
     Gfilt.HalfSize = (Gfilt.taps - Gfilt.taps%2)/2;
     Gfilt.theta = (float*) malloc(sizeof(float)*Gfilt.Nori);
-    for (int i=0;i<Gfilt.Nori;i++) 
+    for (int i=0;i<Gfilt.Nori;i++)
         Gfilt.theta[i] = i*M_PI/Gfilt.Nori;
     Gfilt.phi[0] = M_PI/2;
     Gfilt.phi[1] = 0.0;
 
-    meshgridTest(Range(-Gfilt.HalfSize,Gfilt.HalfSize-1), Range(-Gfilt.HalfSize,Gfilt.HalfSize-1), Gfilt.X, Gfilt.Y); 
+    meshgridTest(Range(-Gfilt.HalfSize,Gfilt.HalfSize-1), Range(-Gfilt.HalfSize,Gfilt.HalfSize-1), Gfilt.X, Gfilt.Y);
 
     Gfilt.Filters[0] = new Mat1f [Gfilt.Nori]; // Even Filters
     Gfilt.Filters[1] = new Mat1f [Gfilt.Nori]; // Odd  Filters
@@ -296,7 +227,7 @@ void VergenceControl::createGaborFilters()
 
             Gabor2D(Gfilt.X, Gfilt.Y, Gfilt.Filters[P][T], Gfilt.f, Gfilt.theta[T], Gfilt.sigma, Gfilt.phi[P]);
             Gfilt.Filters[P][T] = Gfilt.Filters[P][T] - mean(Gfilt.Filters[P][T]);
-            
+
             dft(Gfilt.Filters[P][T], Gfilt.FiltersFFT[P][T], DFT_COMPLEX_OUTPUT);
 
             split(Gfilt.FiltersFFT[P][T], planes);
@@ -305,10 +236,10 @@ void VergenceControl::createGaborFilters()
 }
 
 
-void VergenceControl::Gabor2D(const Mat &X, const Mat &Y, const Mat &G,
+void VergenceControl::Gabor2D(const Mat &X, const Mat &Y, Mat &G,
                               float f, float theta, float sigma, float phi)
 {
-    //------------------- 2D GABOR FUNCTION -------------------// 
+    //------------------- 2D GABOR FUNCTION -------------------//
     float Xrot, Yrot;
 
     int count = 0;
@@ -318,28 +249,27 @@ void VergenceControl::Gabor2D(const Mat &X, const Mat &Y, const Mat &G,
             Yrot = -X.at<int>(r,c)*sin(theta)+Y.at<int>(r,c)*cos(theta);
 
             G.at<float>(r,c) = exp(-(Xrot*Xrot + Yrot*Yrot)/(2*sigma*sigma))*sin(2*M_PI*f*Xrot + phi);
-
         }
 }
 
 
 void VergenceControl::create_Gaussian(const string &ini_filter_file)
 {
-    //------------------- CREATE 2D GAUSSIAN FUNCTION -------------------// 
+    //------------------- CREATE 2D GAUSSIAN FUNCTION -------------------//
     char * cstr = new char [ini_filter_file.length()+1];
-    std::strcpy (cstr, ini_filter_file.c_str());
+    strcpy (cstr, ini_filter_file.c_str());
 
-    CIniReader iniReader(cstr); 
-    fovea_size = iniReader.ReadFloat("Gaussian", "fovea_size", 0);
+    CIniReader iniReader(cstr);
+    fovea_size = iniReader.ReadFloat("Gaussian", "fovea_size");
 
     Gaussian = Mat(Gfilt.taps, Gfilt.taps, CV_32FC1);
     Gaussian2D(Gfilt.X, Gfilt.Y, Gaussian, fovea_size);
 }
 
 
-void VergenceControl::Gaussian2D(const Mat &X, const Mat &Y, const Mat &G, float sigma)
+void VergenceControl::Gaussian2D(const Mat &X, const Mat &Y, Mat &G, float sigma)
 {
-    //------------------- 2D GAUSSIAN FORMULA -------------------// 
+    //------------------- 2D GAUSSIAN FORMULA -------------------//
     for(int r=0; r<X.rows; r++)
         for(int c=0; c<X.cols; c++)
             G.at<float>(r,c) = exp(-(X.at<int>(r,c)*X.at<int>(r,c) + Y.at<int>(r,c)*Y.at<int>(r,c))/(2*sigma*sigma));
@@ -348,7 +278,7 @@ void VergenceControl::Gaussian2D(const Mat &X, const Mat &Y, const Mat &G, float
 
 void VergenceControl::meshgrid(const Mat &xgv, const Mat &ygv, Mat1i &X, Mat1i &Y)
 {
-    //------------------- MESHGRID UTILITY -------------------// 
+    //------------------- MESHGRID UTILITY -------------------//
     repeat(xgv.reshape(1,1), ygv.total(), 1, X);
     repeat(ygv.reshape(1,1).t(), 1, xgv.total(), Y);
 }
@@ -357,7 +287,7 @@ void VergenceControl::meshgrid(const Mat &xgv, const Mat &ygv, Mat1i &X, Mat1i &
 // helper function (maybe that goes somehow easier)
 void VergenceControl::meshgridTest(const Range &xgv, const Range &ygv, Mat1i &X, Mat1i &Y)
 {
-    //------------------- MESHGRID UTILITY -------------------// 
+    //------------------- MESHGRID UTILITY -------------------//
     vector<int> t_x, t_y;
     for (int i = xgv.start; i <= xgv.end; i++) t_x.push_back(i);
         for (int i = ygv.start; i <= ygv.end; i++) t_y.push_back(i);
@@ -367,7 +297,7 @@ void VergenceControl::meshgridTest(const Range &xgv, const Range &ygv, Mat1i &X,
 
 void VergenceControl::loadImgFile(const string &img_filename, char c)
 {
-    //------------------- LOAD IMAGE INTO CLASS FROM FILE -------------------// 
+    //------------------- LOAD IMAGE INTO CLASS FROM FILE -------------------//
     if(c=='L' | c =='l'){
         //------------------- LOAD IMAGE -------------------//
         L = imread(img_filename, IMREAD_GRAYSCALE);
@@ -418,7 +348,7 @@ void VergenceControl::loadImgFile(const string &img_filename, char c)
 
 void VergenceControl::loadImg(const Mat &img, char c)
 {
-    //------------------- LOAD IMAGE INTO CLASS -------------------// 
+    //------------------- LOAD IMAGE INTO CLASS -------------------//
     if(c=='L' | c =='l'){
 
         img.copyTo(L);
@@ -433,7 +363,7 @@ void VergenceControl::loadImg(const Mat &img, char c)
 
     }
     else if(c=='R' | c =='r'){
-        
+
         img.copyTo(R);
 
         copyMakeBorder(R, Rpad, Gfilt.taps, Gfilt.taps, Gfilt.taps, Gfilt.taps, BORDER_REFLECT_101);
@@ -449,7 +379,7 @@ void VergenceControl::loadImg(const Mat &img, char c)
 
 void VergenceControl::loadVergenceW(const string &verg_filename)
 {
-    //------------------- LOAD VERGENCE WEIGHTS INTO CLASS FROM FILE -------------------// 
+    //------------------- LOAD VERGENCE WEIGHTS INTO CLASS FROM FILE -------------------//
     FILE *fp;
     float tmpf[1];
 
@@ -471,7 +401,7 @@ void VergenceControl::loadVergenceW(const string &verg_filename)
             for( int o=0; o<Vergence.Nori; o++){
                 fread(tmpf,sizeof(float),1,fp);
                 Vergence.VergW[c].at<float>(p,o) = tmpf[0];
-                }
+            }
     }
 
     fclose(fp);
@@ -480,7 +410,7 @@ void VergenceControl::loadVergenceW(const string &verg_filename)
 
 void VergenceControl::computeVergenceControl()
 {
-    //------------------- COMPUTE VERGENCE CONTROL -------------------// 
+    //------------------- COMPUTE VERGENCE CONTROL -------------------//
     start_time = clock();
     //imageFFT();
 
@@ -495,7 +425,7 @@ void VergenceControl::computeVergenceControl()
 
 void VergenceControl::imageFFT()
 {
-    //------------------- COMPUTE DFT OF IMAGE -------------------// 
+    //------------------- COMPUTE DFT OF IMAGE -------------------//
     Lpatch = L(ROI);
 
     Lpatch.convertTo(Lpatch32F, CV_32FC1);
@@ -518,13 +448,13 @@ void VergenceControl::filtGaborBankFFT()
     for (int T=0;T<Gfilt.Nori;T++) //EVEN/ODD
         for (int P=0;P<2;P++){
             mulSpectrums(Lfft,Gfilt.FiltersFFT[P][T],tmpSpectrum, 0);
-            dft(tmpSpectrum,tmpIFT, DFT_INVERSE); 
+            dft(tmpSpectrum,tmpIFT, DFT_INVERSE);
 
             split(tmpIFT, planes);
             planes[0].copyTo(Lfilt[P][T]);
 
             mulSpectrums(Rfft,Gfilt.FiltersFFT[P][T],tmpSpectrum, 0);
-            dft(tmpSpectrum,tmpIFT, DFT_INVERSE); 
+            dft(tmpSpectrum,tmpIFT, DFT_INVERSE);
 
             split(tmpIFT, planes);
             planes[0].copyTo(Rfilt[P][T]);
@@ -562,7 +492,7 @@ void VergenceControl::shiftGaborBank()
 void VergenceControl::computeEnergy()
 {
     //------------------- COMPUTE BINOCULAR ENERGY -------------------//
-    for (int P=0;P<int(Gfilt.Nph);P++) 
+    for (int P=0;P<int(Gfilt.Nph);P++)
         for (int T=0;T<Gfilt.Nori;T++){
             tmpEven = Lfilt[0][T] + RShiftE[P][T];
             tmpEven = tmpEven.mul(tmpEven);
@@ -603,7 +533,7 @@ float VergenceControl::getVergenceH()
     //------------------- GET HORIZONTAL VERGENCE CONTROL -------------------//
     return Vergence.VC[0][0];
 }
-    
+
 
 float VergenceControl::getVergenceV()
 {
@@ -657,4 +587,3 @@ void VergenceControl::getSubImgSize(int *M, int *N)
     M[0] = Mpatch;
     N[0] = Npatch;
 }
-

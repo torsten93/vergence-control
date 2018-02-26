@@ -24,7 +24,7 @@
 #include <cstdio>
 #include <iostream>
 
-#include "VergenceControl.h"
+#include "VergenceControl/VergenceControl.h"
 
 using namespace std;
 using namespace cv;
@@ -55,15 +55,15 @@ void on_mouse(int event, int x, int y, int d, void *ptr)
         STOP = true;
     }
 }
- 
+
 
 void meshgrid(int maxX, int maxY, Mat &X, Mat &Y)
 {
-  for (int i = 0; i <= maxX-1; i++) 
+  for (int i = 0; i <= maxX-1; i++)
     for (int j = 0; j <= maxY-1; j++){
         X.at<float>(i,j) = (float)j;
         Y.at<float>(i,j) = (float)i;
-    }   
+    }
 }
 
 
@@ -74,7 +74,7 @@ int test_single_image(const string &left_filename, const string &right_filename)
     Mat L = imread(left_filename, IMREAD_GRAYSCALE);
     if( L.empty() )
     {
-        
+
         printf("Cannot read image file: %s\n", left_filename.c_str());
         return -1;
     }
@@ -120,9 +120,9 @@ int test_single_image(const string &left_filename, const string &right_filename)
 int test_mouse(const string &left_filename, const string &right_filename)
 {
     Mat L = imread(left_filename, IMREAD_GRAYSCALE);
-    
+
     if( L.empty() )
-    {   
+    {
         printf("Cannot read image file: %s\n", left_filename.c_str());
         return -1;
     }
@@ -170,10 +170,10 @@ int test_mouse(const string &left_filename, const string &right_filename)
     imshow("ANAGLYPH",ANAG);
 
     setMouseCallback("ANAGLYPH", on_mouse, NULL);
-    
+
     float STATE_H = 0.0, STATE_V = 0.0;
     while (!STOP)
-    {   
+    {
         imshow("ANAGLYPH",ANAG);
         int KEY = waitKey(1);
 
@@ -189,7 +189,7 @@ int test_mouse(const string &left_filename, const string &right_filename)
             for(int i=0; i< 12; i++){
                 POPULATION.loadImg(Lint, 'L');
                 POPULATION.loadImg(Rint, 'R');
-                
+
                 POPULATION.computeVergenceControl();
 
                 float VH = POPULATION.getVergenceH();
@@ -227,8 +227,8 @@ int test_mouse(const string &left_filename, const string &right_filename)
 int test_mouse_scale(const string &left_filename, const string &right_filename)
 {
     Mat L = imread(left_filename, IMREAD_GRAYSCALE);
-    
-    if( L.empty() ) {        
+
+    if( L.empty() ) {
         printf("Cannot read image file: %s\n", left_filename.c_str());
         return -1;
     }
@@ -304,7 +304,7 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
     C.x = SX/2; C.y = SY/2;
     Point2d F1(C.x - SSX * SCALE_FACTOR, C.y - SSY * SCALE_FACTOR);
     Point2d F2(C.x + SSX * SCALE_FACTOR, C.y + SSY * SCALE_FACTOR);
-    
+
     rectangle(ANAG, F1, F2, Scalar(0,255,0), 2);
 
     imshow("ANAGLYPH",ANAG);
@@ -312,7 +312,7 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
 
     float STATE_H = 0.0, STATE_V = 0.0;
     while (!STOP)
-    {   
+    {
         imshow("ANAGLYPH",ANAG);
         int KEY = waitKey(1);
 
@@ -322,7 +322,7 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
         if (LOOP){
             cout << "\nLeft button of the mouse is clicked - position (" << C.x << ", " << C.y << ")" << endl;
             //STOP = true;
-            
+
             F1.x = C.x - SSX * SCALE_FACTOR; F1.y = C.y - SSY * SCALE_FACTOR;
             F2.x = C.x + SSX * SCALE_FACTOR; F2.y = C.y + SSY * SCALE_FACTOR;
 
@@ -334,7 +334,7 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
 
                 POPULATION.loadImg(LscaleInt, 'L');
                 POPULATION.loadImg(RscaleInt, 'R');
-                
+
                 POPULATION.computeVergenceControl();
 
                 float VH = POPULATION.getVergenceH();
@@ -397,5 +397,3 @@ int main(int argc, const char *argv[])
 
     return test_mouse_scale(left_filename,right_filename);
 }
-
-

@@ -20,9 +20,7 @@
 #include <ctime>
 #include <string>
 
-#include "opencv2/core.hpp"
-
-namespace VergenceControl {
+#include <opencv2/opencv.hpp>
 
 //----------------------------------------------------------
 //A simple wrapper class for the population coding model
@@ -39,7 +37,7 @@ public:
 
     //Read left and right images from file Load_Img_File
     void loadImgFile(const std::string &img_filename, char c);
-    void loadImg(Mat img, char c);
+    void loadImg(const cv::Mat &img, char c);
     void Load_Img_RGB(unsigned char *img, char c, char *gray);
     void Load_Img_GREY(unsigned char *img, char c);
 
@@ -57,7 +55,7 @@ public:
 
 private:
     // GABOR FILTERS
-    typedef struct 
+    typedef struct
     {
         int Nori, Nph;
         float *theta;
@@ -77,7 +75,7 @@ private:
         cv::Mat1i X, Y;
     } Gabor;
 
-    typedef struct 
+    typedef struct
     {
         int Nori, Nph, Nch; // Orientations, Phases, Channels
         cv::Mat1f *VergW; //vergence weights
@@ -88,8 +86,8 @@ private:
 
     Gabor Gfilt;
     Verg Vergence;
-    int M, N, Mcut, Ncut; 
-    int Mpatch, Npatch; 
+    int M, N, Mcut, Ncut;
+    int Mpatch, Npatch;
     int Mpad, Npad;
     float Verg_control[2];
     cv::Mat L, R, Lpad, Rpad, Lpatch, Rpatch;
@@ -103,7 +101,7 @@ private:
     float fovea_size;
     cv::Mat Gaussian;
     cv::Point2d Center;
-    cv::Rect2d ROI;
+    cv::Rect_<double> ROI;
     float testVW;
 
     std::clock_t start_time, end_time;
@@ -116,11 +114,11 @@ private:
     void loadGaborParams(const std::string &ini_filter_file);
     void meshgrid(const cv::Mat &xgv, const cv::Mat &ygv, cv::Mat1i &X, cv::Mat1i &Y);
     void meshgridTest(const cv::Range &xgv, const cv::Range &ygv, cv::Mat1i &X, cv::Mat1i &Y);
-    void Gabor2D(const cv::Mat &X, const cv::Mat &Y, const cv::Mat &G,
+    void Gabor2D(const cv::Mat &X, const cv::Mat &Y, cv::Mat &G,
                  float f, float theta, float sigma, float phi);
-    
+
     void create_Gaussian(const std::string &ini_filter_file);
-    void Gaussian2D(const cv::Mat &X, const cv::Mat &Y, const cv::Mat &G, float sigma);
+    void Gaussian2D(const cv::Mat &X, const cv::Mat &Y, cv::Mat &G, float sigma);
 
     void imageFFT();
     void filtGaborBankFFT();
@@ -131,7 +129,4 @@ private:
     void loadVergenceW(const std::string &verg_filename);
 };
 
-}
-
 #endif
-
