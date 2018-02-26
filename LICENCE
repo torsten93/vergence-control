@@ -1,0 +1,44 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% 		A Portable Bio-Inspired Architecture for		            %%%%
+%%%%		   Efficient Robotic Vergence Control    		            %%%%
+%%%%  							 		                                %%%%
+%%%%									                                %%%%
+%%%% 	Copyright (c) Sep. 2017						                    %%%%
+%%%% 	All rights reserved.						                    %%%%
+%%%%									                                %%%%
+%%%% 	Authors: Agostino Gibaldi, Andrea Canessa, Silvio P. Sabatini	%%%%
+%%%%          								                            %%%%
+%%%% 	PSPC-lab - Department of Informatics, Bioengineering, 		    %%%%
+%%%% 	Robotics and Systems Engineering - University of Genoa		    %%%%
+%%%%									                                %%%%
+%%%% 	The code is released for free use for SCIENTIFIC RESEARCH ONLY. %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%	Permission to use, copy, or modify this software and its documentation
+%	for educational and research purposes only and without fee is hereby
+%	granted, provided that this copyright notice and the original authors'
+%	names appear on all copies and supporting documentation. This program
+%	shall not be used, rewritten, or adapted as the basis of a commercial
+%	software or hardware product without first obtaining permission of the
+%	authors. The authors make no representations about the suitability of
+%	this software for any purpose. It is provided "as is" without express
+%	or implied warranty.
+%
+%-------------------------------------------------------------------------------
+%
+%	This software serves for the control of binocular coordination of
+%       eye movements on a robotic stereo head
+%
+%	CREDITS:
+%	Gibaldi, A., Vanegas, M., Canessa, A., & Sabatini, S. P. (2017).
+%	A portable bio-inspired architecture for efficient robotic vergence
+%	control. International Journal of Computer Vision, 121(2), 281-302.
+%
+%	Gibaldi, A., Canessa, A., Chessa, M., Sabatini, S. P., & Solari, F.
+% 	(2011, October). A neuromorphic control module for real-time vergence
+%	eye movements on the iCub robot head. In Humanoid Robots (Humanoids),
+%	2011 11th IEEE-RAS International Conference on (pp. 543-550). IEEE.
+%
+% 	Kindly report any suggestions or corrections to agostino.gibaldi@gmail.com
+%
+%-------------------------------------------------------------------------------
