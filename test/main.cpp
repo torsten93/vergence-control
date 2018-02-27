@@ -409,5 +409,5 @@ int main(int argc, const char *argv[])
 	cout << "image_left_file  = " << left_filename    << endl;
 	cout << "image_right_file = " << right_filename   << endl;
 
-    return test_single_image(ini_filename, weights_filename, left_filename, right_filename);
+    return test_mouse_scale(ini_filename, weights_filename, left_filename, right_filename);
 }
