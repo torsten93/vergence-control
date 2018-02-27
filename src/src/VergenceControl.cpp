@@ -57,9 +57,8 @@ VergenceControl::VergenceControl(int width, int height, const string &filter_fil
     Npad = Mcut + 2*Gfilt.taps;
 
     createGaborFilters();
-
     create_Gaussian(filter_filename);
-    loadVergenceW(verg_weight);
+	loadVergenceW(verg_weight);
 
     //------------------- INIT PATCH IMAGE -------------------//
     Lpatch = Mat(Mpatch, Npatch, CV_8UC1, Scalar(0));
@@ -158,6 +157,7 @@ void VergenceControl::loadGaborParams(const string &ini_filter_file)
     //------------------- LOAD PARAMETERS FOR GABOR FILTERS -------------------//
 
 	// LOAD FILTER PARAMS
+
     INIReader iniReader(ini_filter_file);
     Gfilt.Nori = iniReader.GetInteger("Gabor", "Nori", 0);
     Gfilt.Nph = iniReader.GetInteger("Gabor", "Nph", 0);
@@ -165,16 +165,26 @@ void VergenceControl::loadGaborParams(const string &ini_filter_file)
     Gfilt.taps = iniReader.GetInteger("Gabor", "taps", 0);
     Gfilt.B = (float)iniReader.GetReal("Gabor", "B", 0.0);
     Gfilt.f = (float)iniReader.GetReal("Gabor", "f", 0.0);
-    string phase = iniReader.Get("Gabor", "phases", "0.0 0.0 0.0 0.0 0.0 0.0 0.0");
+    
+	string phase = iniReader.Get("Gabor", "phases", "0.0 0.0 0.0 0.0 0.0 0.0 0.0");
+	if (phase[0] == '\"') {
+		phase.erase(0, 1);
+	}
+	if (phase[phase.size()-1] == '\"') {
+		phase.erase(phase.size() - 1, 1);
+	}
+
     vector<float> v;
     for (string::size_type sz = 0; sz < phase.size();) {
-        v.push_back(stof(phase.substr(sz), &sz));
+		phase = phase.substr(sz);
+        v.push_back(stof(phase, &sz));
     }
     Gfilt.phase = new float[v.size()];
     for (unsigned int i = 0; i < v.size(); i++) {
         Gfilt.phase[i] = v[i];
     }
-    fovea_size = (float)iniReader.GetReal("Gaussian", "fovea_size", 0.0);
+    
+	fovea_size = (float)iniReader.GetReal("Gaussian", "fovea_size", 0.0);
 }
 
 
