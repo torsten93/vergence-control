@@ -17,12 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED 11)
 find_package(OpenCV REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" OFF)
-option(BUILD_TESTING "Create tests using CMake" ON)
 option(ENABLE_RPATH "Enable RPATH for this library" ON)
-
-if(BUILD_TESTING)
-  enable_testing()
-endif()
 
 mark_as_advanced(ENABLE_RPATH)
 include(AddInstallRPATHSupport)
@@ -48,6 +43,5 @@ install_basic_package_files(${PROJECT_NAME} VARS_PREFIX ${PROJECT_NAME}
                                             NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 include(AddUninstallTarget)
 
-if(BUILD_TESTING)
-  add_subdirectory(test)
-endif()
+add_subdirectory(test)
+add_subdirectory(icub)

@@ -28,6 +28,7 @@
 
 using namespace std;
 using namespace cv;
+using namespace vergencecontrol;
 
 bool STOP = false;
 bool LOOP = false;
@@ -394,16 +395,23 @@ int main(int argc, const char *argv[])
     string ini_filename, weights_filename;
     string left_filename, right_filename;
 
-    if (argc < 5) {
+	if (argc == 1) {
+		ini_filename     = "../../../data/Gt43B0.0208f0.063ph7.ini";
+		weights_filename = "../../../data/vergence-weights.bin";
+		left_filename    = "../../../data/images/Lsmall.png";
+		right_filename   = "../../../data/images/Rsmall.png";
+	}
+    else if (argc < 5) {
         cout << "Expected 4 inputs" << endl;
         return EXIT_FAILURE;
     }
-
-    ini_filename     = argv[1];
-    weights_filename = argv[2];
-    left_filename    = argv[3];
-    right_filename   = argv[4];
-
+	else {
+		ini_filename     = argv[1];
+		weights_filename = argv[2];
+		left_filename    = argv[3];
+		right_filename   = argv[4];
+	}
+ 
 	cout << "ini_file         = " << ini_filename     << endl;
 	cout << "weights_file     = " << weights_filename << endl;
 	cout << "image_left_file  = " << left_filename    << endl;

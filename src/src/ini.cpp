@@ -18,8 +18,10 @@ https://github.com/benhoyt/inih
 #include "VergenceControl/private/ini.h"
 
 #if !INI_USE_STACK
-#include <stdlib.h>
+#include <cstdlib>
 #endif
+
+using namespace std;
 
 #define MAX_SECTION 50
 #define MAX_NAME 50
@@ -264,6 +266,5 @@ int ini_parse_string(const char* string, ini_handler handler, void* user) {
 
     ctx.ptr = string;
     ctx.num_left = strlen(string);
-    return ini_parse_stream((ini_reader)ini_reader_string, &ctx, handler,
-                            user);
+    return ini_parse_stream((ini_reader)ini_reader_string, &ctx, handler, user);
 }

@@ -22,111 +22,113 @@
 
 #include <opencv2/opencv.hpp>
 
-//----------------------------------------------------------
-//A simple wrapper class for the population coding model
-//of vergence control computation, developed in C on FFT convolution
-//----------------------------------------------------------
-class VergenceControl {
-    int width;        //image width
-    int height;       //image height
+namespace vergencecontrol {
 
-public:
-    VergenceControl(int width, int height, const std::string &filter_filename,
-                    const std::string &verg_weight, int vergence_channels);
-    ~VergenceControl();
+	//----------------------------------------------------------
+	//A simple wrapper class for the population coding model
+	//of vergence control computation, developed in C on FFT convolution
+	//----------------------------------------------------------
+	class VergenceControl {
+		int width;        //image width
+		int height;       //image height
 
-    //Read left and right images from file Load_Img_File
-    void loadImgFile(const std::string &img_filename, char c);
-    void loadImg(const cv::Mat &img, char c);
-    void Load_Img_RGB(unsigned char *img, char c, char *gray);
-    void Load_Img_GREY(unsigned char *img, char c);
+	public:
+		VergenceControl(int width, int height, const std::string &filter_filename, 
+			const std::string &verg_weight, int vergence_channels);
+		~VergenceControl();
 
-    // Compute vergence control
-    void computeVergenceControl();
-    void setCenter(const cv::Point2d &cntr);
+		//Read left and right images from file Load_Img_File
+		void loadImgFile(const std::string &img_filename, char c);
+		void loadImg(const cv::Mat &img, char c);
 
-    float getVergenceH();
-    float getVergenceV();
-    cv::Scalar* getVergence();
-    void printVergence();
-    void getVergenceGAIN(float* GAIN);
-    void setVergenceGAIN(float* GAIN);
-    void getSubImgSize(int *M, int *N);
+		// Compute vergence control
+		void computeVergenceControl();
+		void setCenter(const cv::Point2d &cntr);
 
-private:
-    // GABOR FILTERS
-    typedef struct
-    {
-        int Nori, Nph;
-        float *theta;
-        float *phase;
-        float phi[2];
+		float getVergenceH();
+		float getVergenceV();
+		cv::Scalar* getVergence();
+		void printVergence();
+		void getVergenceGAIN(float* GAIN);
+		void setVergenceGAIN(float* GAIN);
+		void getSubImgSize(int *M, int *N);
 
-        float sigma;
-        float f;
-        int taps;
-        int HalfSize;
-        float B;
+	private:
+		// GABOR FILTERS
+		typedef struct
+		{
+			int Nori, Nph;
+			float *theta;
+			float *phase;
+			float phi[2];
 
-        //cv::Mat* EvenFilters;
-        //cv::Mat* OddFilters;
-        cv::Mat1f* Filters[2];
-        cv::Mat2f* FiltersFFT[2];
-        cv::Mat1i X, Y;
-    } Gabor;
+			float sigma;
+			float f;
+			int taps;
+			int HalfSize;
+			float B;
 
-    typedef struct
-    {
-        int Nori, Nph, Nch; // Orientations, Phases, Channels
-        cv::Mat1f *VergW; //vergence weights
-        cv::Scalar VC[2], NORM;
-        float GAIN[2];
+			//cv::Mat* EvenFilters;
+			//cv::Mat* OddFilters;
+			cv::Mat1f* Filters[2];
+			cv::Mat2f* FiltersFFT[2];
+			cv::Mat1i X, Y;
+		} Gabor;
 
-    } Verg;
+		typedef struct
+		{
+			int Nori, Nph, Nch; // Orientations, Phases, Channels
+			cv::Mat1f *VergW; //vergence weights
+			cv::Scalar VC[2], NORM;
+			float GAIN[2];
 
-    Gabor Gfilt;
-    Verg Vergence;
-    int M, N, Mcut, Ncut;
-    int Mpatch, Npatch;
-    int Mpad, Npad;
-    float Verg_control[2];
-    cv::Mat L, R, Lpad, Rpad, Lpatch, Rpatch;
-    cv::Mat1f Lpatch32F, Rpatch32F;
-    cv::Mat Lfft, Rfft;
-    cv::Mat Lgray, Rgray;
-    cv::Mat1f *Lfilt[2], *Rfilt[2]; //Even/Odd filtered images
-    cv::Mat1f *RShiftE[7], *RShiftO[7], *Energy[7]; // Even/Odd filtered and phase shifted right image
-    cv::Mat1f tmpEven, tmpOdd, tmpSum;
-    cv::Mat SUM_H, SUM_V, SUM_N;
-    float fovea_size;
-    cv::Mat Gaussian;
-    cv::Point2d Center;
-    cv::Rect_<double> ROI;
-    float testVW;
+		} Verg;
 
-    std::clock_t start_time, end_time;
+		Gabor Gfilt;
+		Verg Vergence;
+		int M, N, Mcut, Ncut;
+		int Mpatch, Npatch;
+		int Mpad, Npad;
+		float Verg_control[2];
+		cv::Mat L, R, Lpad, Rpad, Lpatch, Rpatch;
+		cv::Mat1f Lpatch32F, Rpatch32F;
+		cv::Mat Lfft, Rfft;
+		cv::Mat Lgray, Rgray;
+		cv::Mat1f *Lfilt[2], *Rfilt[2]; //Even/Odd filtered images
+		cv::Mat1f *RShiftE[7], *RShiftO[7], *Energy[7]; // Even/Odd filtered and phase shifted right image
+		cv::Mat1f tmpEven, tmpOdd, tmpSum;
+		cv::Mat SUM_H, SUM_V, SUM_N;
+		float fovea_size;
+		cv::Mat Gaussian;
+		cv::Point2d Center;
+		cv::Rect_<double> ROI;
+		float testVW;
 
-    cv::Mat planes[2];
-    cv::Mat tmpSpectrum;
-    cv::Mat tmpIFT, tmpF;
+		std::clock_t start_time, end_time;
 
-    void createGaborFilters();
-    void loadGaborParams(const std::string &ini_filter_file);
-    void meshgrid(const cv::Mat &xgv, const cv::Mat &ygv, cv::Mat1i &X, cv::Mat1i &Y);
-    void meshgridTest(const cv::Range &xgv, const cv::Range &ygv, cv::Mat1i &X, cv::Mat1i &Y);
-    void Gabor2D(const cv::Mat &X, const cv::Mat &Y, cv::Mat &G,
-                 float f, float theta, float sigma, float phi);
+		cv::Mat planes[2];
+		cv::Mat tmpSpectrum;
+		cv::Mat tmpIFT, tmpF;
 
-    void create_Gaussian(const std::string &ini_filter_file);
-    void Gaussian2D(const cv::Mat &X, const cv::Mat &Y, cv::Mat &G, float sigma);
+		void createGaborFilters();
+		void loadGaborParams(const std::string &ini_filter_file);
+		void meshgrid(const cv::Mat &xgv, const cv::Mat &ygv, cv::Mat1i &X, cv::Mat1i &Y);
+		void meshgridTest(const cv::Range &xgv, const cv::Range &ygv, cv::Mat1i &X, cv::Mat1i &Y);
+		void Gabor2D(const cv::Mat &X, const cv::Mat &Y, cv::Mat &G,
+			float f, float theta, float sigma, float phi);
 
-    void imageFFT();
-    void filtGaborBankFFT();
-    void filtGaborBank();
-    void shiftGaborBank();
-    void computeEnergy();
-    void computeVergence();
-    void loadVergenceW(const std::string &verg_filename);
-};
+		void create_Gaussian(const std::string &ini_filter_file);
+		void Gaussian2D(const cv::Mat &X, const cv::Mat &Y, cv::Mat &G, float sigma);
+
+		void imageFFT();
+		void filtGaborBankFFT();
+		void filtGaborBank();
+		void shiftGaborBank();
+		void computeEnergy();
+		void computeVergence();
+		void loadVergenceW(const std::string &verg_filename);
+	};
+
+}
 
 #endif

@@ -27,6 +27,7 @@
 
 using namespace std;
 using namespace cv;
+using namespace vergencecontrol;
 
 VergenceControl::VergenceControl(int width, int height, const string &filter_filename,
                                  const string &verg_weight, int vergence_channels)

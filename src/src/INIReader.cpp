@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+
 #include "VergenceControl/private/ini.h"
 #include "VergenceControl/private/INIReader.h"
 
