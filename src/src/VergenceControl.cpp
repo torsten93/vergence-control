@@ -14,9 +14,6 @@
 //%%%%  The code is released for free use for SCIENTIFIC RESEARCH ONLY.   %%%%
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#include "VergenceControl/VergenceControl.h"
-#include "VergenceControl/private/INIReader.h"
-
 #include <cstdio>
 #include <cmath>
 #include <vector>
@@ -24,6 +21,9 @@
 #include <iterator>
 #include <sstream>
 #include <iostream>
+
+#include "VergenceControl/VergenceControl.h"
+#include "VergenceControl/private/INIReader.h"
 
 using namespace std;
 using namespace cv;

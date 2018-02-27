@@ -14,32 +14,33 @@
 //%%%%  The code is released for free use for SCIENTIFIC RESEARCH ONLY.   %%%%
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#include "opencv2/core.hpp"
-//#include "opencv2/core/utility.hpp"
-//#include "opencv2/imgproc.hpp"
-//#include "opencv2/imgcodecs.hpp"
-//#include "opencv2/highgui.hpp"
-
 #include <ctime>
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
+
+#include "opencv2/opencv.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
 
 #include "VergenceControl/VergenceControl.h"
 
 using namespace std;
 using namespace cv;
 
+bool STOP = false;
+bool LOOP = false;
+Point2d C;
+
 static void help()
 {
     printf("\nThis program demonstrated the use of a bioinspired VERGENCE CONTROL based on the binocular energy model\n"
            "The stereo image is filtered with a Gabor filter bank, to compute binocular energy, and the control seeks\n"
            "to maximize such energy.\n\n"
-           "Usage: VergenceControl [image_left image_right]\n\n\n");
+           "Usage: VergenceControl ini_file weights_file image_left image_right\n\n\n");
 }
 
-
-bool STOP = false, LOOP = false;
-Point2d C;
 
 void on_mouse(int event, int x, int y, int d, void *ptr)
 {
@@ -67,7 +68,8 @@ void meshgrid(int maxX, int maxY, Mat &X, Mat &Y)
 }
 
 
-int test_single_image(const string &left_filename, const string &right_filename)
+int test_single_image(const string &ini_filename, const string &weights_filename,
+                      const string &left_filename, const string &right_filename)
 {
     clock_t start_time, end_time;
 
@@ -90,24 +92,24 @@ int test_single_image(const string &left_filename, const string &right_filename)
     MatSize sz = R.size;
     SY = sz[0]; SX = sz[1];
 
-    VergenceControl POPULATION(SX, SY, "../Gt43B0.0208f0.063ph7.ini", "../vergence-weights.bin", 3);
+    VergenceControl population(SX, SY, ini_filename, weights_filename, 3);
 
     float GAIN[2] = {10.0,-1};
-    POPULATION.setVergenceGAIN(GAIN);
+    population.setVergenceGAIN(GAIN);
 
-    POPULATION.loadImg(L, 'L');
-    POPULATION.loadImg(R, 'R');
+    population.loadImg(L, 'L');
+    population.loadImg(R, 'R');
 
     start_time = clock();
     int d;
 
     for(d=0;d<10;d++){
 
-        POPULATION.computeVergenceControl();
+        population.computeVergenceControl();
 
-        Scalar* VC = POPULATION.getVergence();
+        Scalar* VC = population.getVergence();
 
-        POPULATION.printVergence();
+        population.printVergence();
     }
     end_time = clock();
 
@@ -117,7 +119,8 @@ int test_single_image(const string &left_filename, const string &right_filename)
 }
 
 
-int test_mouse(const string &left_filename, const string &right_filename)
+int test_mouse(const string &ini_filename, const string &weights_filename,
+               const string &left_filename, const string &right_filename)
 {
     Mat L = imread(left_filename, IMREAD_GRAYSCALE);
 
@@ -155,10 +158,10 @@ int test_mouse(const string &left_filename, const string &right_filename)
     Mat map_x(SX, SY, CV_32FC1), map_y(SX, SY, CV_32FC1), map_xw(SX, SY, CV_32FC1), map_yw(SX, SY, CV_32FC1);;
     meshgrid(SX, SY, map_x, map_y);
 
-    VergenceControl POPULATION(SY, SX, "../Gt43B0.0208f0.063ph7.ini", "../vergence-weights.bin", 3);
+    VergenceControl population(SY, SX, ini_filename, weights_filename, 3);
 
     float GAIN[2] = {5.0,-0.5};
-    POPULATION.setVergenceGAIN(GAIN);
+    population.setVergenceGAIN(GAIN);
 
     // Create Anaglyph image
     Lint.copyTo(planes[0]);
@@ -184,18 +187,18 @@ int test_mouse(const string &left_filename, const string &right_filename)
             cout << "Left button of the mouse is clicked - position (" << C.x << ", " << C.y << ")" << endl;
             //STOP = true;
 
-            POPULATION.setCenter(C);
+            population.setCenter(C);
 
             for(int i=0; i< 12; i++){
-                POPULATION.loadImg(Lint, 'L');
-                POPULATION.loadImg(Rint, 'R');
+                population.loadImg(Lint, 'L');
+                population.loadImg(Rint, 'R');
 
-                POPULATION.computeVergenceControl();
+                population.computeVergenceControl();
 
-                float VH = POPULATION.getVergenceH();
-                float VV = POPULATION.getVergenceV();
+                float VH = population.getVergenceH();
+                float VV = population.getVergenceV();
 
-                POPULATION.printVergence();
+                population.printVergence();
 
                 STATE_H += VH; STATE_V += VV;
                 map_xw = map_x - STATE_H;
@@ -224,7 +227,8 @@ int test_mouse(const string &left_filename, const string &right_filename)
 }
 
 
-int test_mouse_scale(const string &left_filename, const string &right_filename)
+int test_mouse_scale(const string &ini_filename, const string &weights_filename,
+                     const string &left_filename, const string &right_filename)
 {
     Mat L = imread(left_filename, IMREAD_GRAYSCALE);
 
@@ -277,7 +281,7 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
     MatSize sz_scale = Rscale.size;
     SXscale = sz_scale[1]; SYscale = sz_scale[0];
 
-    VergenceControl POPULATION(SXscale, SYscale, "../Gt43B0.0208f0.063ph7.ini", "../vergence-weights.bin", 3);
+    VergenceControl population(SXscale, SYscale, ini_filename, weights_filename, 3);
 
     Mat ANAG(SY,SX,CV_8UC3,Scalar(0,0,0));
     Mat planes[3] = {LscaleInt,LscaleInt,RscaleInt};
@@ -289,7 +293,7 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
     meshgrid(SYscale, SXscale, map_x_scale, map_y_scale);
 
     float GAIN[2] = {5.0,-1.0};
-    POPULATION.setVergenceGAIN(GAIN);
+    population.setVergenceGAIN(GAIN);
 
     // Create Anaglyph image
     Lint.copyTo(planes[0]);
@@ -299,7 +303,7 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
     merge(planes, 3, ANAG);
 
     int SSX, SSY;
-    POPULATION.getSubImgSize(&SSX, &SSY);
+    population.getSubImgSize(&SSX, &SSY);
 
     C.x = SX/2; C.y = SY/2;
     Point2d F1(C.x - SSX * SCALE_FACTOR, C.y - SSY * SCALE_FACTOR);
@@ -328,19 +332,19 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
 
             C.x = C.x * SCALE_FACTOR;
             C.y = C.y * SCALE_FACTOR;
-            POPULATION.setCenter(C);
+            population.setCenter(C);
 
             for(int i=0; i< 12; i++){
 
-                POPULATION.loadImg(LscaleInt, 'L');
-                POPULATION.loadImg(RscaleInt, 'R');
+                population.loadImg(LscaleInt, 'L');
+                population.loadImg(RscaleInt, 'R');
 
-                POPULATION.computeVergenceControl();
+                population.computeVergenceControl();
 
-                float VH = POPULATION.getVergenceH();
-                float VV = POPULATION.getVergenceV();
+                float VH = population.getVergenceH();
+                float VV = population.getVergenceV();
 
-                POPULATION.printVergence();
+                population.printVergence();
 
                 // IMAGE FOR COMPUTATION
                 STATE_H += VH; STATE_V += VV;
@@ -384,16 +388,21 @@ int test_mouse_scale(const string &left_filename, const string &right_filename)
 int main(int argc, const char *argv[])
 {
     help();
+
+    string ini_filename, weights_filename;
     string left_filename, right_filename;
 
-    if (argc < 2) {
-        left_filename  = "../images/Lmed.png";
-        right_filename = "../images/Rmed.png";
+    if (argc < 4) {
+        cerr << "Expected 4 inputs" << endl;
+        return EXIT_FAILURE;
     }
     else {
-        left_filename = argv[0];
-        right_filename = argv[1];
+        ini_filename = argv[0];
+        weights_filename = argv[1];
+        left_filename = argv[2];
+        right_filename = argv[3];
     }
 
-    return test_mouse_scale(left_filename,right_filename);
+    return test_mouse_scale(ini_filename,weights_filename,
+                            left_filename,right_filename);
 }
