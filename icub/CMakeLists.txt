@@ -6,6 +6,10 @@
 cmake_minimum_required(VERSION 3.1)
 project(FingersPositionControl_test-package)
 
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED 11)
+
 find_package(YARP REQUIRED)
 find_package(ICUBcontrib REQUIRED)
 find_package(FingersPositionControl REQUIRED)

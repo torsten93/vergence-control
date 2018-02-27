@@ -15,6 +15,7 @@
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #include "VergenceControl/VergenceControl.h"
+#include "VergenceControl/private/INIReader.h"
 
 #include <cstdio>
 #include <cmath>
@@ -26,34 +27,6 @@
 
 using namespace std;
 using namespace cv;
-
-//-----------------------------------------------------------//
-//----------------------INI READER---------------------------//
-//-----------------------------------------------------------//
-class CIniReader
-{
-public:
-    CIniReader(const string &szFileName)
-    {
-    }
-
-    int ReadInteger(const string &szSection, const string &szKey)
-    {
-    }
-
-    float ReadFloat(const string &szSection, const string &szKey)
-    {
-    }
-
-    bool ReadBoolean(const string &szSection, const string &szKey)
-    {
-    }
-
-    float* ReadFloatArray(const string &szSection, const string &szKey)
-    {
-    }
-};
-
 
 VergenceControl::VergenceControl(int width, int height, const string &filter_filename,
                                  const string &verg_weight, int vergence_channels)
@@ -187,15 +160,23 @@ void VergenceControl::loadGaborParams(const string &ini_filter_file)
     strcpy (cstr, ini_filter_file.c_str());
 
     // LOAD FILTER PARAMS
-    CIniReader iniReader(cstr);
-    Gfilt.Nori = iniReader.ReadInteger("Gabor", "Nori");
-    Gfilt.Nph = iniReader.ReadInteger("Gabor", "Nph");
-    Gfilt.sigma = iniReader.ReadFloat("Gabor", "sigma");
-    Gfilt.taps = iniReader.ReadInteger("Gabor", "taps");
-    Gfilt.B = iniReader.ReadFloat("Gabor", "B");
-    Gfilt.f = iniReader.ReadFloat("Gabor", "f");
-    Gfilt.phase = iniReader.ReadFloatArray("Gabor", "phases");
-    fovea_size = iniReader.ReadFloat("Gaussian", "fovea_size");
+    INIReader iniReader(cstr);
+    Gfilt.Nori = iniReader.GetInteger("Gabor", "Nori", 0);
+    Gfilt.Nph = iniReader.GetInteger("Gabor", "Nph", 0);
+    Gfilt.sigma = iniReader.GetReal("Gabor", "sigma", 0.0);
+    Gfilt.taps = iniReader.GetInteger("Gabor", "taps", 0);
+    Gfilt.B = iniReader.GetReal("Gabor", "B", 0.0);
+    Gfilt.f = iniReader.GetReal("Gabor", "f", 0.0);
+    string phase = iniReader.Get("Gabor", "phases", "0.0 0.0 0.0 0.0 0.0 0.0 0.0");
+    vector<float> v;
+    for (string::size_type sz = 0; sz < phase.size();) {
+        v.push_back(stof(phase.substr(sz), &sz));
+    }
+    Gfilt.phase = new float[v.size()];
+    for (unsigned int i = 0; i < v.size(); i++) {
+        Gfilt.phase[i] = v[i];
+    }
+    fovea_size = iniReader.GetReal("Gaussian", "fovea_size", 0.0);
 }
 
 
@@ -259,8 +240,8 @@ void VergenceControl::create_Gaussian(const string &ini_filter_file)
     char * cstr = new char [ini_filter_file.length()+1];
     strcpy (cstr, ini_filter_file.c_str());
 
-    CIniReader iniReader(cstr);
-    fovea_size = iniReader.ReadFloat("Gaussian", "fovea_size");
+    INIReader iniReader(cstr);
+    fovea_size = iniReader.GetReal("Gaussian", "fovea_size", 0.0);
 
     Gaussian = Mat(Gfilt.taps, Gfilt.taps, CV_32FC1);
     Gaussian2D(Gfilt.X, Gfilt.Y, Gaussian, fovea_size);

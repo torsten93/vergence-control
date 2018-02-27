@@ -3,7 +3,7 @@
 # All Rights Reserved.
 # Authors: Agostino Gibaldi, Andrea Canessa, Silvio P. Sabatini
 
-set(${PROJECT_NAME}_SRC src/VergenceControl.cpp)
+set(${PROJECT_NAME}_SRC src/VergenceControl.cpp src/INIReader.cpp src/ini.c)
 set(${PROJECT_NAME}_HDR include/VergenceControl/VergenceControl.h)
 
 add_definitions(-D_USE_MATH_DEFINES)

@@ -10,6 +10,10 @@ include(GNUInstallDirs)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED 11)
+
 find_package(OpenCV REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
