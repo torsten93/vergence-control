@@ -10,11 +10,6 @@ https://github.com/benhoyt/inih
 #ifndef __INI_H__
 #define __INI_H__
 
-/* Make this header file easier to include in C++ code */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 
 /* Nonzero if ini_handler callback should accept lineno parameter. */
@@ -121,10 +116,6 @@ int ini_parse_string(const char* string, ini_handler handler, void* user);
 /* Stop parsing on first error (default is to keep parsing). */
 #ifndef INI_STOP_ON_FIRST_ERROR
 #define INI_STOP_ON_FIRST_ERROR 0
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* __INI_H__ */

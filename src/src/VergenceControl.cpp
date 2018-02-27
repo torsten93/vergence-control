@@ -39,8 +39,8 @@ VergenceControl::VergenceControl(int width, int height, const string &filter_fil
     R =  Mat(height, width, CV_8UC3, Scalar(0,0,0));
 
     //------------------- VERGENCE GAIN -------------------//
-    Vergence.GAIN[0] = 1.0;
-    Vergence.GAIN[1] = 0.2;
+    Vergence.GAIN[0] = 1.0f;
+    Vergence.GAIN[1] = 0.2f;
 
     //------------------- CREATE GABOR FILTERS AND GAUSSIAN ENVELOPE -------------------//
     loadGaborParams(filter_filename);
@@ -156,17 +156,15 @@ VergenceControl::~VergenceControl()
 void VergenceControl::loadGaborParams(const string &ini_filter_file)
 {
     //------------------- LOAD PARAMETERS FOR GABOR FILTERS -------------------//
-    char * cstr = new char [ini_filter_file.length()+1];
-    strcpy (cstr, ini_filter_file.c_str());
 
-    // LOAD FILTER PARAMS
-    INIReader iniReader(cstr);
+	// LOAD FILTER PARAMS
+    INIReader iniReader(ini_filter_file);
     Gfilt.Nori = iniReader.GetInteger("Gabor", "Nori", 0);
     Gfilt.Nph = iniReader.GetInteger("Gabor", "Nph", 0);
-    Gfilt.sigma = iniReader.GetReal("Gabor", "sigma", 0.0);
+    Gfilt.sigma = (float)iniReader.GetReal("Gabor", "sigma", 0.0);
     Gfilt.taps = iniReader.GetInteger("Gabor", "taps", 0);
-    Gfilt.B = iniReader.GetReal("Gabor", "B", 0.0);
-    Gfilt.f = iniReader.GetReal("Gabor", "f", 0.0);
+    Gfilt.B = (float)iniReader.GetReal("Gabor", "B", 0.0);
+    Gfilt.f = (float)iniReader.GetReal("Gabor", "f", 0.0);
     string phase = iniReader.Get("Gabor", "phases", "0.0 0.0 0.0 0.0 0.0 0.0 0.0");
     vector<float> v;
     for (string::size_type sz = 0; sz < phase.size();) {
@@ -176,7 +174,7 @@ void VergenceControl::loadGaborParams(const string &ini_filter_file)
     for (unsigned int i = 0; i < v.size(); i++) {
         Gfilt.phase[i] = v[i];
     }
-    fovea_size = iniReader.GetReal("Gaussian", "fovea_size", 0.0);
+    fovea_size = (float)iniReader.GetReal("Gaussian", "fovea_size", 0.0);
 }
 
 
@@ -189,8 +187,8 @@ void VergenceControl::createGaborFilters()
     Gfilt.HalfSize = (Gfilt.taps - Gfilt.taps%2)/2;
     Gfilt.theta = (float*) malloc(sizeof(float)*Gfilt.Nori);
     for (int i=0;i<Gfilt.Nori;i++)
-        Gfilt.theta[i] = i*M_PI/Gfilt.Nori;
-    Gfilt.phi[0] = M_PI/2;
+        Gfilt.theta[i] = (float)(i*M_PI/Gfilt.Nori);
+    Gfilt.phi[0] = (float)(M_PI/2.0);
     Gfilt.phi[1] = 0.0;
 
     meshgridTest(Range(-Gfilt.HalfSize,Gfilt.HalfSize-1), Range(-Gfilt.HalfSize,Gfilt.HalfSize-1), Gfilt.X, Gfilt.Y);
@@ -229,7 +227,7 @@ void VergenceControl::Gabor2D(const Mat &X, const Mat &Y, Mat &G,
             Xrot =  X.at<int>(r,c)*cos(theta)+Y.at<int>(r,c)*sin(theta);
             Yrot = -X.at<int>(r,c)*sin(theta)+Y.at<int>(r,c)*cos(theta);
 
-            G.at<float>(r,c) = exp(-(Xrot*Xrot + Yrot*Yrot)/(2*sigma*sigma))*sin(2*M_PI*f*Xrot + phi);
+            G.at<float>(r,c) = (float)(exp(-(Xrot*Xrot + Yrot*Yrot)/(2*sigma*sigma))*sin(2*M_PI*f*Xrot + phi));
         }
 }
 
@@ -237,11 +235,8 @@ void VergenceControl::Gabor2D(const Mat &X, const Mat &Y, Mat &G,
 void VergenceControl::create_Gaussian(const string &ini_filter_file)
 {
     //------------------- CREATE 2D GAUSSIAN FUNCTION -------------------//
-    char * cstr = new char [ini_filter_file.length()+1];
-    strcpy (cstr, ini_filter_file.c_str());
-
-    INIReader iniReader(cstr);
-    fovea_size = iniReader.GetReal("Gaussian", "fovea_size", 0.0);
+    INIReader iniReader(ini_filter_file);
+    fovea_size = (float)iniReader.GetReal("Gaussian", "fovea_size", 0.0);
 
     Gaussian = Mat(Gfilt.taps, Gfilt.taps, CV_32FC1);
     Gaussian2D(Gfilt.X, Gfilt.Y, Gaussian, fovea_size);
@@ -260,8 +255,8 @@ void VergenceControl::Gaussian2D(const Mat &X, const Mat &Y, Mat &G, float sigma
 void VergenceControl::meshgrid(const Mat &xgv, const Mat &ygv, Mat1i &X, Mat1i &Y)
 {
     //------------------- MESHGRID UTILITY -------------------//
-    repeat(xgv.reshape(1,1), ygv.total(), 1, X);
-    repeat(ygv.reshape(1,1).t(), 1, xgv.total(), Y);
+    repeat(xgv.reshape(1,1), (int)ygv.total(), 1, X);
+    repeat(ygv.reshape(1,1).t(), 1, (int)xgv.total(), Y);
 }
 
 
@@ -279,7 +274,7 @@ void VergenceControl::meshgridTest(const Range &xgv, const Range &ygv, Mat1i &X,
 void VergenceControl::loadImgFile(const string &img_filename, char c)
 {
     //------------------- LOAD IMAGE INTO CLASS FROM FILE -------------------//
-    if(c=='L' | c =='l'){
+    if(c=='L' || c =='l'){
         //------------------- LOAD IMAGE -------------------//
         L = imread(img_filename, IMREAD_GRAYSCALE);
 
@@ -302,7 +297,7 @@ void VergenceControl::loadImgFile(const string &img_filename, char c)
         dft(Lpatch32F, Lfft, DFT_COMPLEX_OUTPUT);
 
     }
-    else if(c=='R' | c =='r'){
+    else if(c=='R' || c =='r'){
         //------------------- LOAD IMAGE -------------------//
         R = imread(img_filename, IMREAD_GRAYSCALE);
 
@@ -330,7 +325,7 @@ void VergenceControl::loadImgFile(const string &img_filename, char c)
 void VergenceControl::loadImg(const Mat &img, char c)
 {
     //------------------- LOAD IMAGE INTO CLASS -------------------//
-    if(c=='L' | c =='l'){
+    if(c=='L' || c =='l'){
 
         img.copyTo(L);
 
@@ -343,7 +338,7 @@ void VergenceControl::loadImg(const Mat &img, char c)
         dft(Lpatch32F, Lfft, DFT_COMPLEX_OUTPUT);
 
     }
-    else if(c=='R' | c =='r'){
+    else if(c=='R' || c =='r'){
 
         img.copyTo(R);
 
@@ -361,10 +356,7 @@ void VergenceControl::loadImg(const Mat &img, char c)
 void VergenceControl::loadVergenceW(const string &verg_filename)
 {
     //------------------- LOAD VERGENCE WEIGHTS INTO CLASS FROM FILE -------------------//
-    FILE *fp;
-    float tmpf[1];
-
-    fp=fopen(verg_filename.c_str(),"rb");
+    FILE *fp=fopen(verg_filename.c_str(),"rb");
     if (fp==NULL){
         printf("Error opening file: %s\n",verg_filename.c_str());
         exit(1);
@@ -380,8 +372,7 @@ void VergenceControl::loadVergenceW(const string &verg_filename)
         Vergence.VergW[c] = Mat(Vergence.Nph,Vergence.Nori,CV_32FC1,Scalar(0.0));
         for( int p=0; p<Vergence.Nph; p++)
             for( int o=0; o<Vergence.Nori; o++){
-                fread(tmpf,sizeof(float),1,fp);
-                Vergence.VergW[c].at<float>(p,o) = tmpf[0];
+                fread(&Vergence.VergW[c].at<float>(p, o),sizeof(float),1,fp);
             }
     }
 
@@ -512,14 +503,14 @@ void VergenceControl::computeVergence()
 float VergenceControl::getVergenceH()
 {
     //------------------- GET HORIZONTAL VERGENCE CONTROL -------------------//
-    return Vergence.VC[0][0];
+    return (float)Vergence.VC[0][0];
 }
 
 
 float VergenceControl::getVergenceV()
 {
     //------------------- GET VERTICAL VERGENCE CONTROL -------------------//
-    return Vergence.VC[1][0];
+    return (float)Vergence.VC[1][0];
 }
 
 
@@ -543,7 +534,7 @@ void VergenceControl::setCenter(const Point2d &cntr)
     // SET IMAGE CENTER AND ROI
     Center.x = cntr.x + Gfilt.taps;
     Center.y = cntr.y + Gfilt.taps;
-    ROI = Rect(Center.x - Mpatch/2,Center.y - Npatch/2, Mpatch, Npatch); // X Y width height
+    ROI = Rect((int)(Center.x - Mpatch/2), (int)(Center.y - Npatch/2), Mpatch, Npatch); // X Y width height
 }
 
 

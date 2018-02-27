@@ -38,7 +38,7 @@ static void help()
     printf("\nThis program demonstrated the use of a bioinspired VERGENCE CONTROL based on the binocular energy model\n"
            "The stereo image is filtered with a Gabor filter bank, to compute binocular energy, and the control seeks\n"
            "to maximize such energy.\n\n"
-           "Usage: VergenceControl ini_file weights_file image_left image_right\n\n\n");
+           "Usage: VergenceControl_test ini_file weights_file image_left_file image_right_file\n\n\n");
 }
 
 
@@ -76,16 +76,15 @@ int test_single_image(const string &ini_filename, const string &weights_filename
     Mat L = imread(left_filename, IMREAD_GRAYSCALE);
     if( L.empty() )
     {
-
         printf("Cannot read image file: %s\n", left_filename.c_str());
-        return -1;
+        return EXIT_FAILURE;
     }
 
     Mat R = imread(right_filename, IMREAD_GRAYSCALE);
     if( R.empty() )
     {
         printf("Cannot read image file: %s\n", right_filename.c_str());
-        return -1;
+        return EXIT_FAILURE;
     }
 
     int SX,SY;
@@ -104,7 +103,6 @@ int test_single_image(const string &ini_filename, const string &weights_filename
     int d;
 
     for(d=0;d<10;d++){
-
         population.computeVergenceControl();
 
         Scalar* VC = population.getVergence();
@@ -113,9 +111,11 @@ int test_single_image(const string &ini_filename, const string &weights_filename
     }
     end_time = clock();
 
-    float seconds = (end_time-start_time)/1000.0;
+    float seconds = (float)((end_time-start_time)/1000.0);
 
     printf("\n Number of images: %d \n Elaboration time %2.2f sec\n FPS: %2.2f\n", d, seconds, float(d)/seconds);
+
+	return EXIT_SUCCESS;
 }
 
 
@@ -127,7 +127,7 @@ int test_mouse(const string &ini_filename, const string &weights_filename,
     if( L.empty() )
     {
         printf("Cannot read image file: %s\n", left_filename.c_str());
-        return -1;
+        return EXIT_FAILURE;
     }
 
     Mat Lint;
@@ -137,7 +137,7 @@ int test_mouse(const string &ini_filename, const string &weights_filename,
     if( R.empty() )
     {
         printf("Cannot read image file: %s\n", right_filename.c_str());
-        return -1;
+        return EXIT_FAILURE;
     }
     Mat Rint;
     R.copyTo(Rint);
@@ -145,7 +145,7 @@ int test_mouse(const string &ini_filename, const string &weights_filename,
     if(R.size() != L.size())
     {
         printf("Left and right images have different size");
-        return -1;
+        return EXIT_FAILURE;
     }
 
     int SX,SY;
@@ -215,15 +215,15 @@ int test_mouse(const string &ini_filename, const string &weights_filename,
 
                 merge(planes, 3, ANAG);
 
-
                 imshow("ANAGLYPH",ANAG);
                 int KEY = waitKey(1);
-
                 }
             }
 
         LOOP = false;
     }
+
+	return EXIT_SUCCESS;
 }
 
 
@@ -234,7 +234,7 @@ int test_mouse_scale(const string &ini_filename, const string &weights_filename,
 
     if( L.empty() ) {
         printf("Cannot read image file: %s\n", left_filename.c_str());
-        return -1;
+        return EXIT_FAILURE;
     }
     else
         printf("Left image %s loaded, image size %dx%d\n",left_filename.c_str(),L.rows,L.cols);
@@ -253,7 +253,7 @@ int test_mouse_scale(const string &ini_filename, const string &weights_filename,
     Mat R = imread(right_filename, IMREAD_GRAYSCALE);
     if( R.empty() ) {
         printf("Cannot read image file: %s\n", right_filename.c_str());
-        return -1;
+        return EXIT_FAILURE;
     }
     else
         printf("Right image %s loaded, image size %dx%d\n",left_filename.c_str(),R.rows,R.cols);
@@ -270,7 +270,7 @@ int test_mouse_scale(const string &ini_filename, const string &weights_filename,
     if(R.size() != L.size())
     {
         printf("Left and right images have different size");
-        return -1;
+        return EXIT_FAILURE;
     }
 
     int SX,SY;
@@ -382,27 +382,32 @@ int test_mouse_scale(const string &ini_filename, const string &weights_filename,
 
         LOOP = false;
     }
+
+	return EXIT_SUCCESS;
 }
 
 
 int main(int argc, const char *argv[])
 {
-    help();
+	help();
 
     string ini_filename, weights_filename;
     string left_filename, right_filename;
 
-    if (argc < 4) {
-        cerr << "Expected 4 inputs" << endl;
+    if (argc < 5) {
+        cout << "Expected 4 inputs" << endl;
         return EXIT_FAILURE;
     }
-    else {
-        ini_filename = argv[0];
-        weights_filename = argv[1];
-        left_filename = argv[2];
-        right_filename = argv[3];
-    }
 
-    return test_mouse_scale(ini_filename,weights_filename,
-                            left_filename,right_filename);
+    ini_filename     = argv[1];
+    weights_filename = argv[2];
+    left_filename    = argv[3];
+    right_filename   = argv[4];
+
+	cout << "ini_file         = " << ini_filename     << endl;
+	cout << "weights_file     = " << weights_filename << endl;
+	cout << "image_left_file  = " << left_filename    << endl;
+	cout << "image_right_file = " << right_filename   << endl;
+
+    return test_single_image(ini_filename, weights_filename, left_filename, right_filename);
 }

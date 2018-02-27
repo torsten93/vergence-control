@@ -16,8 +16,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED 11)
 
 find_package(OpenCV REQUIRED)
 
-option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
-option(BUILD_TESTING "Create tests using CMake" OFF)
+option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" OFF)
+option(BUILD_TESTING "Create tests using CMake" ON)
 option(ENABLE_RPATH "Enable RPATH for this library" ON)
 
 if(BUILD_TESTING)
