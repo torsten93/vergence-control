@@ -21,6 +21,7 @@
 #include "opencv2/opencv.hpp"
 
 #include <yarp/os/all.h>
+#include <yarp/dev/all.h>
 #include <yarp/sig/all.h>
 
 #include "VergenceControl/VergenceControl.h"
@@ -28,16 +29,19 @@
 using namespace std;
 using namespace cv;
 using namespace yarp::os;
+using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace vergencecontrol;
 
 
 class Controller : public RFModule
 {
+	PolyDriver driver;
+	IGazeControl *igaze;
+
 	BufferedPort<ImageOf<PixelRgb>> iPortL;
 	BufferedPort<ImageOf<PixelRgb>> iPortR;
 	BufferedPort<ImageOf<PixelRgb>> oPortAnaglyph;
-	BufferedPort<Bottle> oPortVergence;
 	
 	string ini_filename, weights_filename;
 	VergenceControl *population;
@@ -54,10 +58,20 @@ public:
 		w_res = rf.check("w-res", Value(80)).asInt();
 		h_res = rf.check("h-res", Value(60)).asInt();
 
+		Property options;
+		options.put("device", "gazecontrollerclient");
+		options.put("remote", "/iKinGazeCtrl");
+		options.put("local", "/" + stemName + "/gaze");
+		if (!driver.open(options)) {
+			yError() << "Unable to open" << options.find("device").asString();
+			return false;
+		}
+
+		driver.view(igaze);
+
 		iPortL.open(("/" + stemName + "/image/left:i").c_str());
 		iPortR.open(("/" + stemName + "/image/right:i").c_str());
 		oPortAnaglyph.open(("/" + stemName + "/image/anaglyph:o").c_str());
-		oPortVergence.open(("/" + stemName + "/vergence:o").c_str());
 
 		population = nullptr;
 		return true;
@@ -108,6 +122,7 @@ public:
 			return false;
 		}
 
+		// Init vergence control
 		if (population == nullptr) {
 			population = new VergenceControl(w_res, h_res, ini_filename, weights_filename, 3);
 		}
@@ -128,11 +143,10 @@ public:
 		population->setVergenceGAIN(gain);
 		population->computeVergenceControl();
 		population->printVergence();
-
-		Bottle &vergence = oPortVergence.prepare();
-		vergence.clear();
-		vergence.addDouble(population->getVergenceH());
-		oPortVergence.write();
+		
+		Vector angles(3, 0.0);
+		angles[2] = population->getVergenceH();
+		igaze->lookAtAbsAngles(angles);
 
 		createAnaglyh(iLeftMono, iRightMono, oPortAnaglyph.prepare());
 		oPortAnaglyph.write();
@@ -155,7 +169,8 @@ public:
 		iPortL.close();
 		iPortR.close();
 		oPortAnaglyph.close();
-		oPortVergence.close();
+
+		driver.close();
 		
 		return true;
 	}
@@ -167,7 +182,7 @@ int main(int argc, char *argv[])
 {
     Network yarp;
 	if (!yarp.checkNetwork()) {
-		cerr << "YARP seems unavailable" << endl;
+		yError() << "YARP seems unavailable";
 		return EXIT_FAILURE;
 	}
 
