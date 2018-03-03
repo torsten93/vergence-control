@@ -109,15 +109,15 @@ public:
 		}
 
 		if (population == nullptr) {
-			population = new VergenceControl(iLeftRgb->width(), iLeftRgb->height(),
-				ini_filename, weights_filename, 3);
+			population = new VergenceControl(w_res, h_res, ini_filename, weights_filename, 3);
 		}
 
-		ImageOf<PixelMono> iLeftMono, iRightMono;
+		ImageOf<PixelMono> iLeftMono;
 		resizeImage(*iLeftRgb, iLeftMono);
-		resizeImage(*iRightRgb, iRightMono);
-
 		Mat iMatLeftMono = cvarrToMat((IplImage*)iLeftMono.getIplImage());
+
+		ImageOf<PixelMono> iRightMono;
+		resizeImage(*iRightRgb, iRightMono);
 		Mat iMatRightMono = cvarrToMat((IplImage*)iRightMono.getIplImage());
 
 		// Compute vergence control
