@@ -3,11 +3,5 @@
 # All Rights Reserved.
 # Authors: Agostino Gibaldi, Andrea Canessa, Silvio P. Sabatini
 
-find_package(YARP QUIET)
-if(YARP_FOUND)
-  list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
-  add_subdirectory(icub-vergence-control)
-  add_subdirectory(icubsim-screen-handler)
-else()
-  message(STATUS "YARP not found")
-endif()
+add_executable(iCubVergenceControl main.cpp)
+target_link_libraries(iCubVergenceControl ${PROJECT_NAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES})

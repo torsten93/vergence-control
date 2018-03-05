@@ -1,0 +1,85 @@
+<application>
+    <name>System Components for iCubSim Vergence Control</name>
+    <dependencies>
+    </dependencies>
+
+    <module>
+        <name>yarplogger</name>
+        <parameters>--start</parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>iCub_SIM</name>
+        <dependencies>
+            <port timeout="20">/yarplogger</port>
+        </dependencies>
+        <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+        <ensure>
+            <wait when="stop">5</wait>
+        </ensure>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>iKinGazeCtrl</name>
+        <parameters>--from configSim.ini</parameters>
+        <dependencies>
+            <port timeout="20">/yarplogger</port>
+            <port timeout="20">/icubSim/torso/state:o</port>
+            <port timeout="20">/icubSim/head/state:o</port>
+            <port timeout="20">/icubSim/inertial</port>
+        </dependencies>
+        <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /viewer/left --x 10 --y 10 --p 50</parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /viewer/right --x 350 --y 10 --p 50</parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /viewer/anaglyph --x 10 --y 350 --p 50</parameters>
+        <node>localhost</node>
+    </module>
+
+    <connection>
+        <from>/icubSim/cam/left</from>
+        <to>/viewer/left</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icubSim/cam/right</from>
+        <to>/viewer/right</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icubSim/cam/left</from>
+        <to>/iCubVergenceControl/image/left:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icubSim/cam/right</from>
+        <to>/iCubVergenceControl/image/right:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/iCubVergenceControl/image/anaglyph:o</from>
+        <to>/viewer/anaglyph</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+</application>
