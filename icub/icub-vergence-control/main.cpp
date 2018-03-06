@@ -36,7 +36,9 @@ using namespace vergencecontrol;
 class Controller : public RFModule
 {
     PolyDriver driver;
-    IGazeControl *igaze;
+    IControlMode2 *ictrl;
+    IPositionControl2 *ipos;
+    IVelocityControl2 *ivel;
 
     BufferedPort<ImageOf<PixelRgb>> iPortL;
     BufferedPort<ImageOf<PixelRgb>> iPortR;
@@ -50,20 +52,39 @@ public:
     bool configure(ResourceFinder &rf) override
     {
         string stemName = rf.check("name", Value("iCubVergenceControl")).asString();
-        ini_filename = rf.check("ini",Value("../../../../data/Gt43B0.0208f0.063ph7.ini")).asString();
-        weights_filename = rf.check("weights",Value("../../../../data/vergence-weights.bin")).asString();
+        string robot =rf.check("robot", Value("icubSim")).asString();
+        ini_filename = rf.check("ini", Value("../../../../data/Gt43B0.0208f0.063ph7.ini")).asString();
+        weights_filename = rf.check("weights", Value("../../../../data/vergence-weights.bin")).asString();
         scale = rf.check("scale", Value(1.0)).asDouble();
 
         Property options;
-        options.put("device", "gazecontrollerclient");
-        options.put("remote", "/iKinGazeCtrl");
-        options.put("local", "/" + stemName + "/gaze");
+        options.put("device", "remote_controlboard");
+        options.put("remote", ("/" + robot + "/head").c_str());
+        options.put("local", "/" + stemName + "/head");
         if (!driver.open(options)) {
             yError() << "Unable to open" << options.find("device").asString();
             return false;
         }
 
-        driver.view(igaze);
+        driver.view(ictrl);
+        driver.view(ipos);
+        driver.view(ivel);
+
+        // attain a starting vergence prior to
+        // enabling the control  
+        ictrl->setControlMode(5,VOCAB_CM_POSITION);
+        ipos->setRefSpeed(5,10.0);
+        ipos->positionMove(5,5.0);
+
+        bool done=false;
+        double t0=Time::now();
+        while (!done && (Time::now()-t0<5.0)) {
+            ipos->checkMotionDone(5,&done);
+            Time::yield();
+        }
+
+        ictrl->setControlMode(5,VOCAB_CM_VELOCITY);
+        ivel->stop(5);
 
         iPortL.open(("/" + stemName + "/image/left:i").c_str());
         iPortR.open(("/" + stemName + "/image/right:i").c_str());
@@ -141,9 +162,7 @@ public:
         population->computeVergenceControl();
         population->printVergence();
         
-        Vector angles(3, 0.0);
-        angles[2] = population->getVergenceH();
-        igaze->lookAtAbsAngles(angles);
+        ivel->velocityMove(5,population->getVergenceH());
 
         createAnaglyh(iLeftMono, iRightMono, oPortAnaglyph.prepare());
         oPortAnaglyph.write();
@@ -167,6 +186,8 @@ public:
         iPortR.close();
         oPortAnaglyph.close();
 
+        ivel->stop(5);
+        ictrl->setControlMode(5,VOCAB_CM_POSITION);
         driver.close();
         
         return true;
