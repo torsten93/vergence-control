@@ -46,7 +46,7 @@ public:
     {
         string stemName=rf.check("name", Value("iCubSimScreenHandler")).asString();
         img_filename=rf.check("img",Value("../../../../data/images/Lmed.png")).asString();
-        screen_period=rf.check("screen-period",Value(30.0)).asDouble();
+        screen_period=rf.check("screen-period",Value(40.0)).asDouble();
         screen_amplitude=rf.check("screen-amplitude",Value(0.5)).asDouble();
 
         Mat img=imread(img_filename.c_str(),IMREAD_COLOR);
@@ -90,7 +90,7 @@ public:
 
     double getPeriod() override
     {
-        return 0.1;
+        return 0.2;
     }
 
     bool updateModule() override

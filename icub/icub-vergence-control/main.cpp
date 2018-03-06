@@ -44,9 +44,7 @@ class Controller : public RFModule
     
     string ini_filename, weights_filename;
     VergenceControl *population;
-
-    int w_res;
-    int h_res;
+    double scale;
 
 public:
     bool configure(ResourceFinder &rf) override
@@ -54,8 +52,7 @@ public:
         string stemName = rf.check("name", Value("iCubVergenceControl")).asString();
         ini_filename = rf.check("ini",Value("../../../../data/Gt43B0.0208f0.063ph7.ini")).asString();
         weights_filename = rf.check("weights",Value("../../../../data/vergence-weights.bin")).asString();
-        w_res = rf.check("w-res", Value(80)).asInt();
-        h_res = rf.check("h-res", Value(60)).asInt();
+        scale = rf.check("scale", Value(1.0)).asDouble();
 
         Property options;
         options.put("device", "gazecontrollerclient");
@@ -78,14 +75,14 @@ public:
 
     double getPeriod() override
     {
-        // in synch with incoming images
+        // synch with incoming images
         return 0.0;
     }
 
     void resizeImage(const ImageOf<PixelRgb> &rgb, ImageOf<PixelMono> &mono) const
     {
         ImageOf<PixelMono> tmp; tmp.resize(rgb);
-        mono.resize(w_res, h_res);
+        mono.resize((int)(scale*tmp.width()), (int)(scale*tmp.height()));
 
         Mat rgbMat = cvarrToMat((IplImage*)rgb.getIplImage());
         Mat tmpMat = cvarrToMat((IplImage*)tmp.getIplImage());
@@ -123,7 +120,8 @@ public:
 
         // Init vergence control
         if (population == nullptr) {
-            population = new VergenceControl(w_res, h_res, ini_filename, weights_filename, 3);
+            population = new VergenceControl((int)(scale*iLeftRgb->width()), (int)(scale*iLeftRgb->height()),
+                                             ini_filename, weights_filename, 3);
         }
 
         ImageOf<PixelMono> iLeftMono;
