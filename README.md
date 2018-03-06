@@ -37,8 +37,9 @@ If the control is working properly, the anaglyph at fixation turns to gray scale
 | The algorithm | The algorithm working on the iCub stereo head |
 | [<img src="https://img.youtube.com/vi/k6yDMyht184/maxresdefault.jpg" width=350 />](https://youtu.be/k6yDMyht184) | [<img src="http://img.youtube.com/vi/viO-SMzpHxo/maxresdefault.jpg" width=350 />](https://youtu.be/viO-SMzpHxo) |
 
+### :robot: [Vergence Control with iCub](./icub)
+
 ### :chart_with_upwards_trend: Future work
-- Embed the control in a script to work in the iCub Simulator
 - Port the code in Python
 
 ### :mortar_board: Authors
