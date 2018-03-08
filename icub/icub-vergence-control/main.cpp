@@ -157,7 +157,7 @@ public:
         population->loadImg(iMatLeftMono, 'L');
         population->loadImg(iMatRightMono, 'R');
 
-        float gain[2] = { 10.0, -1 };
+        float gain[2] = { -15.0, -1 };
         population->setVergenceGAIN(gain);
         population->computeVergenceControl();
         population->printVergence();
