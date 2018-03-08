@@ -47,6 +47,7 @@ class Controller : public RFModule
     string ini_filename, weights_filename;
     VergenceControl *population;
     double scale;
+    double gain;
 
 public:
     bool configure(ResourceFinder &rf) override
@@ -56,6 +57,7 @@ public:
         ini_filename = rf.check("ini", Value("../../../../data/Gt43B0.0208f0.063ph7.ini")).asString();
         weights_filename = rf.check("weights", Value("../../../../data/vergence-weights.bin")).asString();
         scale = rf.check("scale", Value(1.0)).asDouble();
+        gain = rf.check("gain", Value(15.0)).asDouble();
 
         Property options;
         options.put("device", "remote_controlboard");
@@ -94,12 +96,6 @@ public:
         return true;
     }
 
-    double getPeriod() override
-    {
-        // synch with incoming images
-        return 0.0;
-    }
-
     void resizeImage(const ImageOf<PixelRgb> &rgb, ImageOf<PixelMono> &mono) const
     {
         ImageOf<PixelMono> tmp; tmp.resize(rgb);
@@ -129,6 +125,12 @@ public:
         rightMat.copyTo(planes[2]);
         merge(planes, 3, anaglyphMat);
     }
+    
+    double getPeriod() override
+    {
+        // synch with incoming images
+        return 0.0;
+    }
 
     bool updateModule() override
     {
@@ -143,6 +145,8 @@ public:
         if (population == nullptr) {
             population = new VergenceControl((int)(scale*iLeftRgb->width()), (int)(scale*iLeftRgb->height()),
                                              ini_filename, weights_filename, 3);
+            float gain[2] = { -gain, -1 };
+            population->setVergenceGAIN(gain);
         }
 
         ImageOf<PixelMono> iLeftMono;
@@ -156,9 +160,6 @@ public:
         // Compute vergence control
         population->loadImg(iMatLeftMono, 'L');
         population->loadImg(iMatRightMono, 'R');
-
-        float gain[2] = { -15.0, -1 };
-        population->setVergenceGAIN(gain);
         population->computeVergenceControl();
         population->printVergence();
         
