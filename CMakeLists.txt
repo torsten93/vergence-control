@@ -4,7 +4,7 @@
 # Authors: Agostino Gibaldi, Andrea Canessa, Silvio P. Sabatini
 
 cmake_minimum_required(VERSION 3.1)
-project(VergenceControl LANGUAGES CXX VERSION 1.0.0.0)
+project(VergenceControl LANGUAGES CXX VERSION 1.0.0)
 
 include(GNUInstallDirs)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
