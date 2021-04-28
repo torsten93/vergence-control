@@ -45,7 +45,7 @@ public:
     bool configure(ResourceFinder &rf) override
     {
         string stemName=rf.check("name", Value("iCubSimScreenHandler")).asString();
-        img_filename=rf.check("img",Value("../../../../data/images/Lmed.png")).asString();
+        img_filename=rf.check("img",Value("../../../data/images/Lmed.png")).asString();
         screen_period=rf.check("screen-period",Value(40.0)).asDouble();
         screen_amplitude=rf.check("screen-amplitude",Value(0.5)).asDouble();
 

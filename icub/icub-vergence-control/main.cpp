@@ -14,16 +14,16 @@
 //%%%%  The code is released for free use for SCIENTIFIC RESEARCH ONLY.   %%%%
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+#include <yarp/cv/Cv.h>
+#include <yarp/dev/all.h>
+#include <yarp/os/all.h>
+#include <yarp/sig/all.h>
+
 #include <cstdlib>
 #include <string>
 
-#include "opencv2/opencv.hpp"
-
-#include <yarp/os/all.h>
-#include <yarp/dev/all.h>
-#include <yarp/sig/all.h>
-
 #include "VergenceControl/VergenceControl.h"
+#include "opencv2/opencv.hpp"
 
 using namespace std;
 using namespace cv;
@@ -32,13 +32,12 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace vergencecontrol;
 
-
 class Controller : public RFModule
 {
     PolyDriver driver;
-    IControlMode2 *ictrl;
-    IPositionControl2 *ipos;
-    IVelocityControl2 *ivel;
+    IControlMode *ictrl;
+    IPositionControl *ipos;
+    IVelocityControl *ivel;
 
     BufferedPort<ImageOf<PixelRgb>> iPortL;
     BufferedPort<ImageOf<PixelRgb>> iPortR;
@@ -47,15 +46,15 @@ class Controller : public RFModule
     string ini_filename, weights_filename;
     VergenceControl *population;
     double scale;
-    double gain;
+    float gain;
 
 public:
     bool configure(ResourceFinder &rf) override
     {
         string stemName = rf.check("name", Value("iCubVergenceControl")).asString();
         string robot =rf.check("robot", Value("icubSim")).asString();
-        ini_filename = rf.check("ini", Value("../../../../data/Gt43B0.0208f0.063ph7.ini")).asString();
-        weights_filename = rf.check("weights", Value("../../../../data/vergence-weights.bin")).asString();
+        ini_filename = rf.check("ini", Value("../../../data/Gt43B0.0208f0.063ph7.ini")).asString();
+        weights_filename =rf.check("weights", Value("../../../data/vergence-weights.bin")).asString();
         scale = rf.check("scale", Value(1.0)).asDouble();
         gain = rf.check("gain", Value(15.0)).asDouble();
 
@@ -96,34 +95,35 @@ public:
         return true;
     }
 
-    void resizeImage(const ImageOf<PixelRgb> &rgb, ImageOf<PixelMono> &mono) const
+    void resizeImage(ImageOf<PixelRgb>* rgb, ImageOf<PixelMono> &mono) const
     {
-        ImageOf<PixelMono> tmp; tmp.resize(rgb);
+        ImageOf<PixelMono> tmp; tmp.resize(*rgb);
         mono.resize((int)(scale*tmp.width()), (int)(scale*tmp.height()));
 
-        Mat rgbMat = cvarrToMat((IplImage*)rgb.getIplImage());
-        Mat tmpMat = cvarrToMat((IplImage*)tmp.getIplImage());
-        Mat monoMat = cvarrToMat((IplImage*)mono.getIplImage());
+        cv::Mat rgbMat = yarp::cv::toCvMat(*rgb);
+        cv::Mat tmpMat = yarp::cv::toCvMat(tmp);
+        cv::Mat monoMat = yarp::cv::toCvMat(mono);
 
         cvtColor(rgbMat, tmpMat, CV_RGB2GRAY);
         resize(tmpMat, monoMat, monoMat.size());
     }
 
-    void createAnaglyh(const ImageOf<PixelMono> &left, const ImageOf<PixelMono> &right,
+    void createAnaglyh(ImageOf<PixelMono>* left, ImageOf<PixelMono>* right,
                        ImageOf<PixelRgb> &anaglyph)
     {
-        yAssert((left.width() == right.width()) && (left.height() == right.height()));
-        anaglyph.resize(left.width(), left.height());
+      yAssert((left->width() == right->width()) &&
+              (left->height() == right->height()));
+      anaglyph.resize(left->width(), left->height());
 
-        Mat leftMat = cvarrToMat((IplImage*)left.getIplImage());
-        Mat rightMat = cvarrToMat((IplImage*)right.getIplImage());
-        Mat anaglyphMat = cvarrToMat((IplImage*)anaglyph.getIplImage());
+      cv::Mat leftMat = yarp::cv::toCvMat(*left);
+      cv::Mat rightMat = yarp::cv::toCvMat(*right);
+      cv::Mat anaglyphMat = yarp::cv::toCvMat(anaglyph);
 
-        Mat planes[3];
-        leftMat.copyTo(planes[0]);
-        leftMat.copyTo(planes[1]);
-        rightMat.copyTo(planes[2]);
-        merge(planes, 3, anaglyphMat);
+      Mat planes[3];
+      leftMat.copyTo(planes[0]);
+      leftMat.copyTo(planes[1]);
+      rightMat.copyTo(planes[2]);
+      merge(planes, 3, anaglyphMat);
     }
     
     double getPeriod() override
@@ -145,17 +145,17 @@ public:
         if (population == nullptr) {
             population = new VergenceControl((int)(scale*iLeftRgb->width()), (int)(scale*iLeftRgb->height()),
                                              ini_filename, weights_filename, 3);
-            float gain[2] = { -gain, -1 };
-            population->setVergenceGAIN(gain);
+            float gains[2] = { -gain, -1 };
+            population->setVergenceGAIN(gains);
         }
 
         ImageOf<PixelMono> iLeftMono;
-        resizeImage(*iLeftRgb, iLeftMono);
-        Mat iMatLeftMono = cvarrToMat((IplImage*)iLeftMono.getIplImage());
+        resizeImage(iLeftRgb, iLeftMono);
+        cv::Mat iMatLeftMono = yarp::cv::toCvMat(iLeftMono);
 
         ImageOf<PixelMono> iRightMono;
-        resizeImage(*iRightRgb, iRightMono);
-        Mat iMatRightMono = cvarrToMat((IplImage*)iRightMono.getIplImage());
+        resizeImage(iRightRgb, iRightMono);
+        cv::Mat iMatRightMono = yarp::cv::toCvMat(iRightMono);
 
         // Compute vergence control
         population->loadImg(iMatLeftMono, 'L');
@@ -165,7 +165,7 @@ public:
         
         ivel->velocityMove(5,population->getVergenceH());
 
-        createAnaglyh(iLeftMono, iRightMono, oPortAnaglyph.prepare());
+        createAnaglyh(&iLeftMono, &iRightMono, oPortAnaglyph.prepare());
         oPortAnaglyph.write();
 
         return true;
